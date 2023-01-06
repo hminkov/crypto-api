@@ -1,17 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RequestStat } from '../users/entities/requeststat.entity';
-import { RequestStatRepository } from '../users/repository/requeststat.repository';
 import { BlockTransaction } from './entities/blocktransaction.entity';
 import { BlockTransactionRepository } from './repository/blocktransaction.repository';
-import { Block } from './interfaces/block';
-import axios from 'axios';
-import { Cron } from '@nestjs/schedule';
 import { LatestBlock } from './entities/latestblock.entity';
 import { LatestBlockRepository } from './repository/latestblock.repository';
+import { Cron } from '@nestjs/schedule';
+import axios from 'axios';
 
 const options = {
-  headers: { 'x-api-key': 'bfa8fc24-6f16-40f0-9ef0-e290a60893b6' },
+  headers: { 'x-api-key': process.env.DB_API_KEY },
 };
 
 @Injectable()
