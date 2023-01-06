@@ -2,6 +2,20 @@ import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class BlockTransaction {
+  constructor(
+    blockHeight: number,
+    transactionHash: string,
+    sender: string,
+    receiver: string,
+    amountSent: number,
+  ) {
+    this.blockHeight = blockHeight;
+    this.transactionHash = transactionHash;
+    this.sender = sender;
+    this.receiver = receiver;
+    this.amountSent = amountSent;
+  }
+
   @PrimaryGeneratedColumn()
   id: number;
 

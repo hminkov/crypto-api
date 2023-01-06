@@ -2,11 +2,17 @@ import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class RequestStat {
+  constructor(clientIp: string, browser: string, timestamp: Date) {
+    this.clientIp = clientIp;
+    this.browser = browser;
+    this.timestamp = timestamp;
+  }
+
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
-  ip: string;
+  clientIp: string;
 
   @Column()
   browser: string;

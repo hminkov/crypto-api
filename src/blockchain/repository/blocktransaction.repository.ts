@@ -1,5 +1,5 @@
-import { BlockTransaction } from 'src/entities/blocktransaction.entity';
-import { Entity, Repository } from 'typeorm';
+import { BlockTransaction } from '../entities/blocktransaction.entity';
+import { Repository } from 'typeorm';
 
 export class BlockTransactionRepository extends Repository<BlockTransaction> {
   find(): Promise<BlockTransaction[]> {

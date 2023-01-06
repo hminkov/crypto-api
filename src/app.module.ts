@@ -1,12 +1,12 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
 import { CacheModule, Module } from '@nestjs/common';
-import { BlockchainController } from './blockchain.controller';
-import { BlockchainService } from './blockchain.service';
-import { BlockTransaction } from './entities/blocktransaction.entity';
-import { RequestStat } from './entities/requestStat.entity';
+import { BlockTransaction } from './blockchain/entities/blocktransaction.entity';
+import { RequestStat } from './users/entities/requeststat.entity';
 import { ScheduleModule } from '@nestjs/schedule';
-
+import { LatestBlock } from './blockchain/entities/latestblock.entity';
+import { UsersModule } from './users/users.module';
+import { BlockchainModule } from './blockchain/blockchain.module';
 @Module({
   imports: [
     CacheModule.register({ isGlobal: true }),
@@ -18,13 +18,12 @@ import { ScheduleModule } from '@nestjs/schedule';
       username: 'postgres',
       password: 'password',
       database: 'crypto_api',
-      entities: [BlockTransaction, RequestStat],
+      entities: [BlockTransaction, RequestStat, LatestBlock],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([BlockTransaction, RequestStat]),
     ScheduleModule.forRoot(),
+    UsersModule,
+    BlockchainModule,
   ],
-  controllers: [BlockchainController],
-  providers: [BlockchainService],
 })
 export class AppModule {}

@@ -1,5 +1,5 @@
-import { Entity, Repository } from 'typeorm';
-import { RequestStat } from '../entities/requestStat.entity';
+import { RequestStat } from '../entities/requeststat.entity';
+import { Repository } from 'typeorm';
 
 export class RequestStatRepository extends Repository<RequestStat> {
   find(): Promise<RequestStat[]> {
