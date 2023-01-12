@@ -8,7 +8,7 @@ import { LatestBlockRepository } from 'src/blockchain/repository/latestblock.rep
 import { RequestStat } from './entities/requeststat.entity';
 import { RequestStatRepository } from './repository/requeststat.repository';
 import { BlockTransactionRepository } from '../blockchain/repository/blocktransaction.repository';
-
+import logger from 'src/logger';
 @Injectable()
 export class UsersService {
   constructor(
@@ -30,13 +30,13 @@ export class UsersService {
   }
 
   async getLatestBlockData(): Promise<LatestBlock> {
-    console.log('----GETTING LATEST BLOCK DATA----');
+    logger.info('----GETTING LATEST BLOCK DATA----');
     const cachedData = (await this.cacheManager.get(
       'latest-block',
     )) as LatestBlock;
-    console.log('cachedData USER SERVICE LATEST BLOCK:', cachedData);
+    logger.info('cachedData USER SERVICE LATEST BLOCK:', cachedData);
     if (cachedData) {
-      console.log('Returning data from cache:', cachedData);
+      logger.info('Returning data from cache:', cachedData);
       return cachedData;
     } else {
       const latestBlock = await this.latestBlockRepository.find({
@@ -48,13 +48,13 @@ export class UsersService {
       await this.cacheManager.set('latest-block', latestBlock, 60);
 
       // return the latest block from the database
-      console.log('Returning data from database LatestBlock:', latestBlock[0]);
+      logger.info('Returning data from database LatestBlock:', latestBlock[0]);
       return latestBlock[0];
     }
   }
 
   async getTransactionData(hash: string) {
-    console.log('---- GETTING TRANSACTION DATA ----');
+    logger.info('---- GETTING TRANSACTION DATA ----');
 
     const transactionData = await this.blockTransactionRepository.findOne({
       where: {
@@ -66,7 +66,7 @@ export class UsersService {
       throw new NotFoundException(`Transaction with hash ${hash} not found`);
     }
 
-    console.log('transactionData:', transactionData);
+    logger.info('transactionData:', transactionData);
     return transactionData;
   }
 }

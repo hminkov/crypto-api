@@ -7,6 +7,7 @@ import { LatestBlock } from './entities/latestblock.entity';
 import { LatestBlockRepository } from './repository/latestblock.repository';
 import { Cron } from '@nestjs/schedule';
 import axios from 'axios';
+import logger from 'src/logger';
 
 const options = {
   headers: { 'x-api-key': process.env.DB_API_KEY },
@@ -44,7 +45,7 @@ export class BlockchainService {
   }
 
   async storeLatestBlock(latestBlockCtx: any) {
-    console.log('---- STORING LATEST BLOCK ----');
+    logger.info('---- STORING LATEST BLOCK ----');
     try {
       const latestBlock = new LatestBlock(
         latestBlockCtx.hash,
@@ -57,7 +58,7 @@ export class BlockchainService {
       // after storing the latest block, store it in the cache
       await this.cacheManager.set('latest-block', latestBlock, 60);
       const test = (await this.cacheManager.get('latest-block')) as LatestBlock;
-      console.log('cachedData LATEST BLOCK:', test);
+      logger.info('cachedData LATEST BLOCK:', test);
     } catch (error) {
       // if there is an error, return the error
       return error;
@@ -65,7 +66,7 @@ export class BlockchainService {
   }
 
   async storeBlockData(latestBlockCtx: any) {
-    console.log('---- STORING BLOCK DATA ----');
+    logger.info('---- STORING BLOCK DATA ----');
     let amountSent = 0;
     const firstTransaction = latestBlockCtx.txs[1];
 
@@ -84,7 +85,7 @@ export class BlockchainService {
       firstTransaction.outputs[0].address,
       amountSent,
     );
-    console.log(blockTransaction);
+    logger.info(blockTransaction);
 
     // Since not every block has a receiver and the database cannot accept null values,
     // we need to check if there is a receiver
@@ -126,10 +127,10 @@ export class BlockchainService {
         //If the block data is not stored in the database, store it in the 'block_transactions' table
         this.storeBlockData(latestBlockCtx);
       } else {
-        console.log(`Block ${latestBlockCtx.height} already stored`);
+        logger.info(`Block ${latestBlockCtx.height} already stored`);
       }
     } catch (error) {
-      console.log(error);
+      logger.error(error);
     }
   }
 }

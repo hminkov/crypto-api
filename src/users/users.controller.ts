@@ -7,7 +7,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-
+import logger from 'src/logger';
 @Controller('blockchain')
 @UseInterceptors(CacheInterceptor)
 export class UsersController {
@@ -20,7 +20,7 @@ export class UsersController {
       req.headers['user-agent'],
       new Date(),
     );
-    console.log('Called the getLatestBlock method');
+    logger.info('Called the getLatestBlock method');
     return this.usersService.getLatestBlockData();
   }
 
@@ -31,7 +31,7 @@ export class UsersController {
       req.headers['user-agent'],
       new Date(),
     );
-    console.log('Called the getTransaction method');
+    logger.info('Called the getTransaction method');
     return this.usersService.getTransactionData(hash);
   }
 }
