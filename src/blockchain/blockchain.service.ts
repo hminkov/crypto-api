@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
+import { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlockTransaction } from './entities/blocktransaction.entity';
 import { BlockTransactionRepository } from './repository/blocktransaction.repository';
@@ -14,6 +15,7 @@ const options = {
 @Injectable()
 export class BlockchainService {
   constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(BlockTransaction)
     private readonly blockTransactionRepository: BlockTransactionRepository,
     @InjectRepository(LatestBlock)
@@ -42,20 +44,35 @@ export class BlockchainService {
   }
 
   async storeLatestBlock(latestBlockCtx: any) {
+    console.log('---- STORING LATEST BLOCK ----');
     try {
       const latestBlock = new LatestBlock(
         latestBlockCtx.hash,
         latestBlockCtx.height,
       );
-      console.log(latestBlock);
+
+      // store the latest block in the database
       await this.latestBlockRepository.save([latestBlock]);
+
+      // after storing the latest block, store it in the cache
+      await this.cacheManager.set('latest-block', latestBlock, 60);
+      const test = (await this.cacheManager.get('latest-block')) as LatestBlock;
+      console.log('cachedData LATEST BLOCK:', test);
     } catch (error) {
+      // if there is an error, return the error
       return error;
     }
   }
+
   async storeBlockData(latestBlockCtx: any) {
+    console.log('---- STORING BLOCK DATA ----');
     let amountSent = 0;
     const firstTransaction = latestBlockCtx.txs[1];
+
+    if ((latestBlockCtx.nTx = '1')) {
+      return new Error('No transactions found');
+    }
+
     firstTransaction['outputs'].forEach(function (output) {
       amountSent += output['value'];
     });
@@ -80,7 +97,7 @@ export class BlockchainService {
 
   async checkIfBlockExists(latestBlockCtx: any): Promise<boolean> {
     try {
-      const blockChecker = await this.blockTransactionRepository.findOne({
+      const blockChecker = await this.latestBlockRepository.findOne({
         where: {
           blockHeight: latestBlockCtx.height,
         },
@@ -109,7 +126,7 @@ export class BlockchainService {
         //If the block data is not stored in the database, store it in the 'block_transactions' table
         this.storeBlockData(latestBlockCtx);
       } else {
-        throw new Error(`Block ${latestBlockCtx.height} already stored`);
+        console.log(`Block ${latestBlockCtx.height} already stored`);
       }
     } catch (error) {
       console.log(error);

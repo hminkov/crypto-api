@@ -6,16 +6,25 @@ import { RequestStat } from './users/entities/requeststat.entity';
 import { LatestBlock } from './blockchain/entities/latestblock.entity';
 import { UsersModule } from './users/users.module';
 import { BlockchainModule } from './blockchain/blockchain.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import * as redisStore from 'cache-manager-redis-store';
 
-const { DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE } = process.env;
+const { HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, REDIS_PORT } =
+  process.env;
 
 @Module({
   imports: [
-    CacheModule.register({ isGlobal: true }),
+    ScheduleModule.forRoot(),
+    CacheModule.register({
+      isGlobal: true,
+      store: redisStore,
+      host: HOST || 'localhost',
+      port: REDIS_PORT,
+    }),
     HttpModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: DB_HOST,
+      host: HOST || 'localhost',
       port: +DB_PORT,
       username: DB_USERNAME,
       password: DB_PASSWORD,

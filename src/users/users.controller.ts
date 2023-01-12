@@ -1,13 +1,17 @@
-import { Controller, Get, Param, Req } from '@nestjs/common';
+import {
+  CacheInterceptor,
+  Controller,
+  Get,
+  Param,
+  Req,
+  UseInterceptors,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
-import { BlockchainService } from '../blockchain/blockchain.service';
 
 @Controller('blockchain')
+@UseInterceptors(CacheInterceptor)
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly blockchainService: BlockchainService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
   @Get('latest')
   async getLatestBlockData(@Req() req) {

@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CACHE_MANAGER, Inject } from '@nestjs/common';
+import { Cache } from 'cache-manager';
 import { BlockTransaction } from 'src/blockchain/entities/blocktransaction.entity';
 import { LatestBlock } from 'src/blockchain/entities/latestblock.entity';
 import { LatestBlockRepository } from 'src/blockchain/repository/latestblock.repository';
@@ -16,6 +18,7 @@ export class UsersService {
     private readonly latestBlockRepository: LatestBlockRepository,
     @InjectRepository(BlockTransaction)
     private readonly blockTransactionRepository: BlockTransactionRepository,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   async recordRequest(ip: string, browser: string, timestamp: Date) {
@@ -24,26 +27,34 @@ export class UsersService {
     console.log(requestStat);
 
     await this.requestStatRepository.save([requestStat]);
-
-    // Retrieve the blockchain data from the 'block_transactions' table
-    // const blockchainData = await this.blockTransactionRepository.find();
   }
 
   async getLatestBlockData(): Promise<LatestBlock> {
-    console.log('I AM GETTING THE LAST BLOCK');
+    console.log('----GETTING LATEST BLOCK DATA----');
+    const cachedData = (await this.cacheManager.get(
+      'latest-block',
+    )) as LatestBlock;
+    console.log('cachedData USER SERVICE LATEST BLOCK:', cachedData);
+    if (cachedData) {
+      console.log('Returning data from cache:', cachedData);
+      return cachedData;
+    } else {
+      const latestBlock = await this.latestBlockRepository.find({
+        order: {
+          blockHeight: 'DESC',
+        },
+      });
+      // if we don't have the latest block in the cache, find it in the database and store it in the cache
+      await this.cacheManager.set('latest-block', latestBlock, 60);
 
-    const latestBlock = await this.latestBlockRepository.find({
-      order: {
-        blockHeight: 'DESC',
-      },
-    });
-    console.log('latestBlock:', latestBlock[1]);
-
-    return latestBlock[0];
+      // return the latest block from the database
+      console.log('Returning data from database LatestBlock:', latestBlock[0]);
+      return latestBlock[0];
+    }
   }
 
   async getTransactionData(hash: string) {
-    console.log('I AM GETTING THE TRANSACTION DATA');
+    console.log('---- GETTING TRANSACTION DATA ----');
 
     const transactionData = await this.blockTransactionRepository.findOne({
       where: {

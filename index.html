@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <title>Blockchain App</title>
+</head>
+
+<body>
+    <header>
+        <h1>Blockchain App</h1>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="#latest-block">Latest Block</a></li>
+            <li><a href="#transaction-data">Transaction Data</a></li>
+        </ul>
+    </nav>
+    <main>
+        <section id="latest-block">
+            <h2>Latest Block</h2>
+            <div id="latest-block-data"></div>
+        </section>
+        <section id="transaction-data">
+            <h2>Transaction Data</h2>
+            <form>
+                <label for="transaction-hash">Enter Transaction Hash:</label><br>
+                <input type="text" id="transaction-hash" name="transaction-hash"><br>
+                <input type="submit" value="Submit">
+            </form>
+            <div id="transaction-data-results"></div>
+        </section>
+    </main>
+</body>
+
+</html>
