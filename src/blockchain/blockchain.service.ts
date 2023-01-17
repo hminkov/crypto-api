@@ -1,4 +1,4 @@
-import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
+import { CACHE_MANAGER, Inject, Injectable, Logger } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlockTransaction } from './entities/blocktransaction.entity';
@@ -7,7 +7,7 @@ import { LatestBlock } from './entities/latestblock.entity';
 import { LatestBlockRepository } from './repository/latestblock.repository';
 import { Cron } from '@nestjs/schedule';
 import axios from 'axios';
-import logger from 'src/logger';
+import { retry } from 'rxjs';
 
 const options = {
   headers: { 'x-api-key': process.env.DB_API_KEY },
@@ -15,6 +15,8 @@ const options = {
 
 @Injectable()
 export class BlockchainService {
+  private readonly logger = new Logger(BlockchainService.name);
+
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(BlockTransaction)
@@ -32,20 +34,24 @@ export class BlockchainService {
         return response.data.bestblockhash;
       });
 
-    const latestBlockCtx = await axios
-      .get(
-        `https://api.tatum.io/v3/bitcoin/block/${bestBlockHash}?type=testnet`,
-        options,
-      )
-      .then((response) => {
-        return response.data;
-      });
-
-    return latestBlockCtx;
+    try {
+      const latestBlockCtx = await axios
+        .get(
+          `https://api.tatum.io/v3/bitcoin/block/${bestBlockHash}?type=testnet`,
+          options,
+        )
+        .then((response) => {
+          return response.data;
+        });
+      return latestBlockCtx;
+    } catch (error) {
+      this.logger.warn('Error getting block data from API');
+      retry;
+    }
   }
 
   async storeLatestBlock(latestBlockCtx: any) {
-    logger.info('---- STORING LATEST BLOCK ----');
+    this.logger.log('---- STORING LATEST BLOCK ----');
     try {
       const latestBlock = new LatestBlock(
         latestBlockCtx.hash,
@@ -58,15 +64,15 @@ export class BlockchainService {
       // after storing the latest block, store it in the cache
       await this.cacheManager.set('latest-block', latestBlock, 60);
       const test = (await this.cacheManager.get('latest-block')) as LatestBlock;
-      logger.info('cachedData LATEST BLOCK:', test);
+      this.logger.log(`cachedData LATEST BLOCK: ${test}`);
     } catch (error) {
       // if there is an error, return the error
-      return error;
+      return new Error(error);
     }
   }
 
   async storeBlockData(latestBlockCtx: any) {
-    logger.info('---- STORING BLOCK DATA ----');
+    this.logger.log('---- STORING BLOCK DATA ----');
     let amountSent = 0;
     const firstTransaction = latestBlockCtx.txs[1];
 
@@ -85,7 +91,7 @@ export class BlockchainService {
       firstTransaction.outputs[0].address,
       amountSent,
     );
-    logger.info(blockTransaction);
+    this.logger.log(blockTransaction);
 
     // Since not every block has a receiver and the database cannot accept null values,
     // we need to check if there is a receiver
@@ -108,12 +114,12 @@ export class BlockchainService {
       }
       return false;
     } catch (error) {
-      throw error;
+      throw new Error(error);
     }
   }
 
   // Store the block information in the 'block_transactions' table in every 2 minutes
-  @Cron('*/1 * * * *')
+  @Cron('*/2 * * * *')
   async handleCronJob() {
     try {
       // Retrieve the latest block data
@@ -127,10 +133,10 @@ export class BlockchainService {
         //If the block data is not stored in the database, store it in the 'block_transactions' table
         this.storeBlockData(latestBlockCtx);
       } else {
-        logger.info(`Block ${latestBlockCtx.height} already stored`);
+        this.logger.warn(`Block ${latestBlockCtx.height} already stored`);
       }
     } catch (error) {
-      logger.error(error);
+      this.logger.error(error);
     }
   }
 }

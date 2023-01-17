@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CACHE_MANAGER, Inject } from '@nestjs/common';
 import { Cache } from 'cache-manager';
@@ -8,9 +8,10 @@ import { LatestBlockRepository } from 'src/blockchain/repository/latestblock.rep
 import { RequestStat } from './entities/requeststat.entity';
 import { RequestStatRepository } from './repository/requeststat.repository';
 import { BlockTransactionRepository } from '../blockchain/repository/blocktransaction.repository';
-import logger from 'src/logger';
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(RequestStat) // this is used to inject the RequestStatRepository into the UsersService from the UsersModule
     private readonly requestStatRepository: RequestStatRepository, // private readonly blockTransactionRepository: BlockTransactionRepository,
@@ -30,13 +31,13 @@ export class UsersService {
   }
 
   async getLatestBlockData(): Promise<LatestBlock> {
-    logger.info('----GETTING LATEST BLOCK DATA----');
+    this.logger.log('----GETTING LATEST BLOCK DATA----');
     const cachedData = (await this.cacheManager.get(
       'latest-block',
     )) as LatestBlock;
-    logger.info('cachedData USER SERVICE LATEST BLOCK:', cachedData);
+    this.logger.log('cachedData USER SERVICE LATEST BLOCK:', cachedData);
     if (cachedData) {
-      logger.info('Returning data from cache:', cachedData);
+      this.logger.log('Returning data from cache:', cachedData);
       return cachedData;
     } else {
       const latestBlock = await this.latestBlockRepository.find({
@@ -48,13 +49,16 @@ export class UsersService {
       await this.cacheManager.set('latest-block', latestBlock, 60);
 
       // return the latest block from the database
-      logger.info('Returning data from database LatestBlock:', latestBlock[0]);
+      this.logger.log(
+        'Returning data from database LatestBlock:',
+        latestBlock[0],
+      );
       return latestBlock[0];
     }
   }
 
   async getTransactionData(hash: string) {
-    logger.info('---- GETTING TRANSACTION DATA ----');
+    this.logger.log('---- GETTING TRANSACTION DATA ----');
 
     const transactionData = await this.blockTransactionRepository.findOne({
       where: {
@@ -66,7 +70,7 @@ export class UsersService {
       throw new NotFoundException(`Transaction with hash ${hash} not found`);
     }
 
-    logger.info('transactionData:', transactionData);
+    this.logger.log('transactionData:', transactionData);
     return transactionData;
   }
 }
