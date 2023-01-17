@@ -1,14 +1,14 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
 import { CacheModule, Module } from '@nestjs/common';
-import { BlockTransaction } from './blockchain/entities/blocktransaction.entity';
-import { RequestStat } from './users/entities/requeststat.entity';
-import { LatestBlock } from './blockchain/entities/latestblock.entity';
-import { UsersModule } from './users/users.module';
-import { BlockchainModule } from './blockchain/blockchain.module';
+import { BlockTransaction } from './common/model/entities/BlockchainTransaction.entity';
+import { RequestStat } from './common/model/entities/UserInfo.entity';
+import { LatestBlock } from './common/model/entities/LatestBlock.entity';
+import { UsersModule } from './services/users/users.module';
+import { BlockchainModule } from './services/blockchain/blockchain.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import * as redisStore from 'cache-manager-redis-store';
-import { SlackModule } from './slack/slack.module';
+import { SlackModule } from './services/slack/slack.module';
 
 const { HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, REDIS_PORT } =
   process.env;

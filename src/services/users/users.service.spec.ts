@@ -5,6 +5,11 @@ describe('UsersService', () => {
   let service: UsersService;
 
   beforeEach(async () => {
+    // Create a fake copy of the request_stats repository
+    const requestStatRepository: Partial<RequestStatRepository> = {
+      save: jest.fn(),
+      
+    
     const module: TestingModule = await Test.createTestingModule({
       providers: [UsersService],
     }).compile();

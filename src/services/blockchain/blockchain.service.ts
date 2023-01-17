@@ -1,10 +1,10 @@
 import { CACHE_MANAGER, Inject, Injectable, Logger } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BlockTransaction } from './entities/blocktransaction.entity';
-import { BlockTransactionRepository } from './repository/blocktransaction.repository';
-import { LatestBlock } from './entities/latestblock.entity';
-import { LatestBlockRepository } from './repository/latestblock.repository';
+import { BlockTransaction } from '../../common/model/entities/BlockchainTransaction.entity';
+import { BlockTransactionRepository } from '../../common/repositories/BlockTransaction.repository';
+import { LatestBlock } from '../../common/model/entities/LatestBlock.entity';
+import { LatestBlockRepository } from '../../common/repositories/LatestBlock.repository';
 import { Cron } from '@nestjs/schedule';
 import axios from 'axios';
 import { retry } from 'rxjs';

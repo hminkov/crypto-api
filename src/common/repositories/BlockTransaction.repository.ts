@@ -1,4 +1,4 @@
-import { BlockTransaction } from '../entities/blocktransaction.entity';
+import { BlockTransaction } from '../model/entities/BlockchainTransaction.entity';
 import { Repository } from 'typeorm';
 
 export class BlockTransactionRepository extends Repository<BlockTransaction> {

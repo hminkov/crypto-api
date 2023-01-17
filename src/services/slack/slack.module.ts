@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { UsersModule } from 'src/users/users.module';
+import { UsersModule } from 'src/services/users/users.module';
 import { SlackController } from './slack.controller';
 import { SlackService } from './slack.service';
 

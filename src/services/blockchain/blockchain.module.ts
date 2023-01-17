@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlockchainService } from './blockchain.service';
-import { BlockTransaction } from './entities/blocktransaction.entity';
-import { LatestBlock } from './entities/latestblock.entity';
-import { BlockTransactionRepository } from './repository/blocktransaction.repository';
-import { LatestBlockRepository } from './repository/latestblock.repository';
+import { BlockTransaction } from '../../common/model/entities/BlockchainTransaction.entity';
+import { LatestBlock } from '../../common/model/entities/LatestBlock.entity';
+import { BlockTransactionRepository } from '../../common/repositories/BlockTransaction.repository';
+import { LatestBlockRepository } from '../../common/repositories/LatestBlock.repository';
 @Module({
   imports: [
     TypeOrmModule.forFeature([

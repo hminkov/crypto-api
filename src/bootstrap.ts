@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as dotenv from 'dotenv';
-import { SlackService } from './slack/slack.service';
+import { SlackService } from './services/slack/slack.service';
 
 async function bootstrap() {
   dotenv.config(); // this is used to load the .env file

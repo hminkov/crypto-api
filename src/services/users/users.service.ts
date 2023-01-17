@@ -2,12 +2,12 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CACHE_MANAGER, Inject } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { BlockTransaction } from 'src/blockchain/entities/blocktransaction.entity';
-import { LatestBlock } from 'src/blockchain/entities/latestblock.entity';
-import { LatestBlockRepository } from 'src/blockchain/repository/latestblock.repository';
-import { RequestStat } from './entities/requeststat.entity';
-import { RequestStatRepository } from './repository/requeststat.repository';
-import { BlockTransactionRepository } from '../blockchain/repository/blocktransaction.repository';
+import { BlockTransaction } from 'src/common/model/entities/BlockchainTransaction.entity';
+import { LatestBlock } from 'src/common/model/entities/LatestBlock.entity';
+import { LatestBlockRepository } from '../../common/repositories/LatestBlock.repository';
+import { RequestStat } from '../../common/model/entities/UserInfo.entity';
+import { RequestStatRepository } from '../../common/repositories/UserInfo.repository';
+import { BlockTransactionRepository } from '../../common/repositories/BlockTransaction.repository';
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
