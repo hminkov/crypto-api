@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { BlockchainModule } from './blockchain/blockchain.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import * as redisStore from 'cache-manager-redis-store';
+import { SlackModule } from './slack/slack.module';
 
 const { HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, REDIS_PORT } =
   process.env;
@@ -34,6 +35,7 @@ const { HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, REDIS_PORT } =
     }),
     UsersModule,
     BlockchainModule,
+    SlackModule,
   ],
 })
 export class AppModule {}
