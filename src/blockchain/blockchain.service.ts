@@ -12,6 +12,7 @@ import { retry } from 'rxjs';
 const options = {
   headers: { 'x-api-key': process.env.DB_API_KEY },
 };
+let fnName;
 
 @Injectable()
 export class BlockchainService {
@@ -46,93 +47,101 @@ export class BlockchainService {
       return latestBlockCtx;
     } catch (error) {
       this.logger.warn('Error getting block data from API');
-      retry;
     }
   }
 
-  async storeLatestBlock(latestBlockCtx: any) {
-    this.logger.log('---- STORING LATEST BLOCK ----');
+  async storeLatestBlockInDB(latestBlockCtx: any) {
+    fnName = this.storeLatestBlockInDB.name;
+    this.logger.log(`${fnName} ---- STORING LATEST BLOCK ----`);
     try {
       const latestBlock = new LatestBlock(
         latestBlockCtx.hash,
         latestBlockCtx.height,
       );
 
-      // store the latest block in the database
+      //Store the latest block in the database
       await this.latestBlockRepository.save([latestBlock]);
 
-      // after storing the latest block, store it in the cache
+      //After storing the latest block, store it in the cache
       await this.cacheManager.set('latest-block', latestBlock, 60);
       const test = (await this.cacheManager.get('latest-block')) as LatestBlock;
-      this.logger.log(`cachedData LATEST BLOCK: ${JSON.stringify(test)}`);
+      this.logger.log(`${fnName} cachedData: ${JSON.stringify(test)}`);
     } catch (error) {
-      // if there is an error, return the error
-      return new Error(error);
+      this.logger.log(`${fnName}: ${error}`);
     }
   }
 
-  async storeBlockData(latestBlockCtx: any) {
-    this.logger.log('---- STORING BLOCK DATA ----');
-    let amountSent = 0;
-    const firstTransaction = latestBlockCtx.txs[1];
-
-    if ((latestBlockCtx.nTx = '1')) {
-      return new Error('No transactions found');
+  async storeBlockDataInDB(latestBlockCtx: any) {
+    fnName = this.storeBlockDataInDB.name;
+    if (latestBlockCtx.nTx === '1') {
+      throw new Error(`${fnName}: No transactions found`);
     }
 
-    firstTransaction['outputs'].forEach(function (output) {
-      amountSent += output['value'];
-    });
+    try {
+      let firstTransaction;
+      let amountSent;
+      let latestBlockHeight;
+      let transactionHash;
+      let senderAddress;
+      let receiverAddress;
+      let i = 1;
+      do {
+        this.logger.log(`${fnName}: ---- STORING BLOCK DATA ----`);
 
-    const blockTransaction = new BlockTransaction(
-      latestBlockCtx.height,
-      firstTransaction.hash,
-      firstTransaction.inputs[0].coin.address,
-      firstTransaction.outputs[0].address,
-      amountSent,
-    );
-    this.logger.log(JSON.stringify(blockTransaction));
+        firstTransaction = latestBlockCtx.txs[i];
+        amountSent = firstTransaction.outputs[0].value;
+        latestBlockHeight = latestBlockCtx.height;
+        transactionHash = firstTransaction.hash;
+        senderAddress = firstTransaction.inputs[0].coin.address;
+        receiverAddress = firstTransaction.outputs[0].address;
 
-    // Since not every block has a receiver and the database cannot accept null values,
-    // we need to check if there is a receiver
-    this.logger.log(`Receiver: ${blockTransaction.receiver}`);
-    if (blockTransaction.receiver) {
-      await this.blockTransactionRepository.save([blockTransaction]);
-    } else {
-      this.logger.log('No receiver found');
+        const blockTransaction = new BlockTransaction(
+          latestBlockHeight,
+          transactionHash,
+          senderAddress,
+          receiverAddress,
+          amountSent,
+        );
+        this.logger.log(`${fnName}: ${JSON.stringify(blockTransaction)}`);
+        //Not every block has a receiver and the database cannot accept null values,
+        //therefore check if there is a receiver
+        if (blockTransaction.receiver) {
+          await this.blockTransactionRepository.save([blockTransaction]);
+        } else {
+          this.logger.error(`${fnName}: No receiver found in iteration ${i}`);
+        }
+        i++;
+      } while (senderAddress === null || receiverAddress === null);
+    } catch (error) {
+      return this.logger.error(`${fnName}: ${error}`);
     }
   }
 
   async checkIfBlockExists(latestBlockCtx: any): Promise<boolean> {
     try {
-      const blockChecker = await this.latestBlockRepository.findOne({
+      const blockChecker = await this.latestBlockRepository.exist({
         where: {
           blockHeight: latestBlockCtx.height,
         },
       });
-      if (blockChecker !== null) {
-        return true;
-      }
-      return false;
+      return blockChecker;
     } catch (error) {
-      throw new Error(error);
+      this.logger.error(error);
     }
   }
 
-  // Store the block information in the 'block_transactions' table in every 2 minutes
+  //Store the block information in the 'block_transactions' table in every 2 minutes
   @Cron('*/2 * * * *')
   async handleCronJob() {
     try {
-      // Retrieve the latest block data
+      //Retrieve the latest block data from TATUM
       const latestBlockCtx = await this.getBlockDataFromAPI();
       //Check if the latest block is already stored in the database
       const existing = await this.checkIfBlockExists(latestBlockCtx);
 
       if (existing === false) {
-        //If the latest block is not stored in the database, store it in the 'latest_block' table
-        this.storeLatestBlock(latestBlockCtx);
-        //If the block data is not stored in the database, store it in the 'block_transactions' table
-        this.storeBlockData(latestBlockCtx);
+        this.storeLatestBlockInDB(latestBlockCtx);
+        this.storeBlockDataInDB(latestBlockCtx);
       } else {
         this.logger.warn(`Block ${latestBlockCtx.height} already stored`);
       }
