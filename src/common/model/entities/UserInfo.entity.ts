@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-export class RequestStat {
+export class UserInfo {
   constructor(clientIp: string, browser: string, timestamp: Date) {
     this.clientIp = clientIp;
     this.browser = browser;

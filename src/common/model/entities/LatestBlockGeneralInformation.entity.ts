@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-export class LatestBlock {
+export class LatestBlockGeneralInformation {
   constructor(blockHash: string, blockHeight: number) {
     this.blockHash = blockHash;
     this.blockHeight = blockHeight;

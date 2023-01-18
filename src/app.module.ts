@@ -1,9 +1,9 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
 import { CacheModule, Module } from '@nestjs/common';
-import { BlockTransaction } from './common/model/entities/BlockchainTransaction.entity';
-import { RequestStat } from './common/model/entities/UserInfo.entity';
-import { LatestBlock } from './common/model/entities/LatestBlock.entity';
+import { BlockTransactionsInformation } from './common/model/entities/BlockTransactionsInformation.entity';
+import { UserInfo } from './common/model/entities/UserInfo.entity';
+import { LatestBlockGeneralInformation } from './common/model/entities/LatestBlockGeneralInformation.entity';
 import { UsersModule } from './services/users/users.module';
 import { BlockchainModule } from './services/blockchain/blockchain.module';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -30,7 +30,11 @@ const { HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, REDIS_PORT } =
       username: DB_USERNAME,
       password: DB_PASSWORD,
       database: DB_DATABASE,
-      entities: [BlockTransaction, RequestStat, LatestBlock],
+      entities: [
+        BlockTransactionsInformation,
+        LatestBlockGeneralInformation,
+        UserInfo,
+      ],
       synchronize: true,
     }),
     UsersModule,

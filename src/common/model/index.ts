@@ -1,3 +1,3 @@
-export * from './entities/BlockchainTransaction.entity';
-export * from './entities/LatestBlock.entity';
+export * from './entities/BlockTransactionsInformation.entity';
+export * from './entities/LatestBlockGeneralInformation.entity';
 export * from './entities/UserInfo.entity';

@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-export class BlockTransaction {
+export class BlockTransactionsInformation {
   constructor(
     blockHeight: number,
     transactionHash: string,
