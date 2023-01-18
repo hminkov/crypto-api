@@ -64,7 +64,7 @@ export class BlockchainService {
       // after storing the latest block, store it in the cache
       await this.cacheManager.set('latest-block', latestBlock, 60);
       const test = (await this.cacheManager.get('latest-block')) as LatestBlock;
-      this.logger.log(`cachedData LATEST BLOCK: ${test}`);
+      this.logger.log(`cachedData LATEST BLOCK: ${JSON.stringify(test)}`);
     } catch (error) {
       // if there is an error, return the error
       return new Error(error);
@@ -91,14 +91,15 @@ export class BlockchainService {
       firstTransaction.outputs[0].address,
       amountSent,
     );
-    this.logger.log(blockTransaction);
+    this.logger.log(JSON.stringify(blockTransaction));
 
     // Since not every block has a receiver and the database cannot accept null values,
     // we need to check if there is a receiver
+    this.logger.log(`Receiver: ${blockTransaction.receiver}`);
     if (blockTransaction.receiver) {
       await this.blockTransactionRepository.save([blockTransaction]);
     } else {
-      return new Error('No receiver found');
+      this.logger.log('No receiver found');
     }
   }
 
