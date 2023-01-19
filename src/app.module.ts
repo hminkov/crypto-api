@@ -15,6 +15,7 @@ const { HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, REDIS_PORT } =
 
 @Module({
   imports: [
+    HttpModule,
     ScheduleModule.forRoot(),
     CacheModule.register({
       isGlobal: true,
@@ -22,7 +23,6 @@ const { HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, REDIS_PORT } =
       host: HOST || 'localhost',
       port: REDIS_PORT,
     }),
-    HttpModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: HOST || 'localhost',

@@ -25,13 +25,13 @@ export class BlockTransaction {
   @Column()
   transactionHash: string;
 
-  @Column()
+  @Column({ nullable: true })
   sender: string;
 
-  @Column()
+  @Column({ nullable: true })
   receiver: string;
 
   // we need numeric here because the value is too large for integer
-  @Column({ type: 'numeric' })
+  @Column({ type: 'numeric', nullable: true })
   amountSent: number;
 }

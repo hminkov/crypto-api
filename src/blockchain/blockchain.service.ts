@@ -7,11 +7,11 @@ import { LatestBlock } from './entities/latestblock.entity';
 import { LatestBlockRepository } from './repository/latestblock.repository';
 import { Cron } from '@nestjs/schedule';
 import axios from 'axios';
-import { retry } from 'rxjs';
 
 const options = {
   headers: { 'x-api-key': process.env.DB_API_KEY },
 };
+
 let fnName;
 
 @Injectable()
@@ -26,9 +26,8 @@ export class BlockchainService {
     private readonly latestBlockRepository: LatestBlockRepository,
   ) {}
 
-  //TODO - add caching
   async getBlockDataFromAPI() {
-    // Make a request to the BTC Testnet API to get the latest block information
+    //Make a request to the BTC Testnet API to get the latest block information
     const bestBlockHash = await axios
       .get('https://api.tatum.io/v3/bitcoin/info?type=testnet', options)
       .then((response) => {
@@ -62,8 +61,8 @@ export class BlockchainService {
       //Store the latest block in the database
       await this.latestBlockRepository.save([latestBlock]);
 
-      //After storing the latest block, store it in the cache
-      await this.cacheManager.set('latest-block', latestBlock, 60);
+      //After storing the latest block, store it in the cache for 30 seconds
+      await this.cacheManager.set('latest-block', latestBlock, 30000);
       const test = (await this.cacheManager.get('latest-block')) as LatestBlock;
       this.logger.log(`${fnName} cachedData: ${JSON.stringify(test)}`);
     } catch (error) {
@@ -73,45 +72,53 @@ export class BlockchainService {
 
   async storeBlockDataInDB(latestBlockCtx: any) {
     fnName = this.storeBlockDataInDB.name;
+    //Check if the latest block has more than one transaction
     if (latestBlockCtx.nTx === '1') {
-      throw new Error(`${fnName}: No transactions found`);
+      throw new Error(
+        `${fnName}: Block ${latestBlockCtx.height} has only one transaction`,
+      );
     }
 
+    let i = 0;
     try {
-      let firstTransaction;
-      let amountSent;
-      let latestBlockHeight;
-      let transactionHash;
-      let senderAddress;
-      let receiverAddress;
-      let i = 1;
-      do {
-        this.logger.log(`${fnName}: ---- STORING BLOCK DATA ----`);
+      latestBlockCtx['txs'].forEach((txs) => {
+        this.logger.log(
+          `${fnName} - Trying to save transaction ${i} to the DB)`,
+        );
+        let firstTransaction = txs[i];
+        let latestBlockHeight = latestBlockCtx.height;
+        let btcSent = firstTransaction.outputs[0].value;
+        let transactionHash = firstTransaction.hash;
+        let senderAddress = firstTransaction.inputs[0].coin.address;
+        let receiverAddress = firstTransaction.outputs[0].address;
 
-        firstTransaction = latestBlockCtx.txs[i];
-        amountSent = firstTransaction.outputs[0].value;
-        latestBlockHeight = latestBlockCtx.height;
-        transactionHash = firstTransaction.hash;
-        senderAddress = firstTransaction.inputs[0].coin.address;
-        receiverAddress = firstTransaction.outputs[0].address;
+        if (!senderAddress) {
+          senderAddress.senderAddress = 'Coinbase';
+          btcSent = 0;
+        }
 
         const blockTransaction = new BlockTransaction(
           latestBlockHeight,
           transactionHash,
           senderAddress,
           receiverAddress,
-          amountSent,
+          btcSent,
         );
-        this.logger.log(`${fnName}: ${JSON.stringify(blockTransaction)}`);
-        //Not every block has a receiver and the database cannot accept null values,
-        //therefore check if there is a receiver
+
         if (blockTransaction.receiver) {
-          await this.blockTransactionRepository.save([blockTransaction]);
+          this.blockTransactionRepository.save([blockTransaction]);
+          this.logger.log(
+            `${fnName} - Transaction ${i} saved to DB: ${JSON.stringify(
+              blockTransaction,
+            )}`,
+          );
         } else {
-          this.logger.error(`${fnName}: No receiver found in iteration ${i}`);
+          this.logger.error(
+            `${fnName}: No receiver found for Transaction ${i}`,
+          );
         }
         i++;
-      } while (senderAddress === null || receiverAddress === null);
+      });
     } catch (error) {
       return this.logger.error(`${fnName}: ${error}`);
     }
@@ -130,20 +137,20 @@ export class BlockchainService {
     }
   }
 
-  //Store the block information in the 'block_transactions' table in every 2 minutes
+  //Store the block information in the 'block_transactions' and 'latest_block' tables in every 2 minutes
   @Cron('*/2 * * * *')
   async handleCronJob() {
     try {
-      //Retrieve the latest block data from TATUM
+      //Retrieve the latest block data from TATUM API
       const latestBlockCtx = await this.getBlockDataFromAPI();
       //Check if the latest block is already stored in the database
       const existing = await this.checkIfBlockExists(latestBlockCtx);
-
+      //If the latest block is not stored in the database, store it
       if (existing === false) {
         this.storeLatestBlockInDB(latestBlockCtx);
         this.storeBlockDataInDB(latestBlockCtx);
       } else {
-        this.logger.warn(`Block ${latestBlockCtx.height} already stored`);
+        this.logger.log(`Block ${latestBlockCtx.height} already stored`);
       }
     } catch (error) {
       this.logger.error(error);
